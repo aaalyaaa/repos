@@ -119,7 +119,7 @@ library(tidyverse)
 dns_data <- read.csv(file = "dns.log", header = FALSE, sep = '\t', na.strings = c("-"))
 ```
 
-#### 2. Добавим данные о структуре о структуре данных (назначении столбцов):
+#### 2. Добавим данные о структуре данных (назначении столбцов):
 
 ``` r
 col_names <- c("timestamp", "uid", "id_orig_h", "id_orig_p", "id_resp_h", "id_resp_p", "proto", "trans_id", "query", "qclass", "qclass_name", "qtype", "qtype_name", "rcode", "rcode_name", "AA", "TC", "RD", "RA", "Z", "answers", "TTLs", "rejected")
@@ -338,7 +338,7 @@ suspicious_patterns
 
 Проведем обогащение данных
 
-#### 10. Определим местоположение (страну, город) и организацию-провайдера для топ-10 доменов:
+#### 11. Определим местоположение (страну, город) и организацию-провайдера для топ-10 доменов:
 
 ``` r
 geo_data <- data.frame()
@@ -374,17 +374,17 @@ geo_data
     8                                              44.206.168.192.in-addr.arpa
     9                                                                 HPE8AA67
     10                                                                  ISATAP
-              country          city        organization
-    1            <NA>          <NA>                <NA>
-    2  United Kingdom        London          Google LLC
-    3  United Kingdom        London Akamai Technologies
-    4          France        Clichy          Apple Inc.
-    5   United States Mountain View          Google LLC
-    6            <NA>          <NA>                <NA>
-    7            <NA>          <NA>                <NA>
-    8            <NA>          <NA>                <NA>
-    9            <NA>          <NA>                <NA>
-    10           <NA>          <NA>                <NA>
+               country      city              organization
+    1             <NA>      <NA>                      <NA>
+    2  The Netherlands Amsterdam                Google LLC
+    3  The Netherlands Amsterdam Akamai Technologies, Inc.
+    4   United Kingdom    Slough                Apple Inc.
+    5  The Netherlands Amsterdam                Google LLC
+    6             <NA>      <NA>                      <NA>
+    7             <NA>      <NA>                      <NA>
+    8             <NA>      <NA>                      <NA>
+    9             <NA>      <NA>                      <NA>
+    10            <NA>      <NA>                      <NA>
 
 ## Вывод
 
