@@ -377,9 +377,9 @@ geo_data
                country          city              organization
     1             <NA>          <NA>                      <NA>
     2    United States Mountain View                Google LLC
-    3  The Netherlands     Amsterdam Akamai Technologies, Inc.
-    4      Netherlands     Amsterdam                Apple Inc.
-    5  The Netherlands     Amsterdam                Google LLC
+    3  The Netherlands       Haarlem Akamai Technologies, Inc.
+    4           France        Clichy                Apple Inc.
+    5    United States Mountain View                Google LLC
     6             <NA>          <NA>                      <NA>
     7             <NA>          <NA>                      <NA>
     8             <NA>          <NA>                      <NA>
