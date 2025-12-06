@@ -374,17 +374,17 @@ geo_data
     8                                              44.206.168.192.in-addr.arpa
     9                                                                 HPE8AA67
     10                                                                  ISATAP
-               country      city              organization
-    1             <NA>      <NA>                      <NA>
-    2  The Netherlands Amsterdam                Google LLC
-    3  The Netherlands Amsterdam Akamai Technologies, Inc.
-    4   United Kingdom    Slough                Apple Inc.
-    5  The Netherlands Amsterdam                Google LLC
-    6             <NA>      <NA>                      <NA>
-    7             <NA>      <NA>                      <NA>
-    8             <NA>      <NA>                      <NA>
-    9             <NA>      <NA>                      <NA>
-    10            <NA>      <NA>                      <NA>
+               country          city              organization
+    1             <NA>          <NA>                      <NA>
+    2    United States Mountain View                Google LLC
+    3  The Netherlands     Amsterdam Akamai Technologies, Inc.
+    4      Netherlands     Amsterdam                Apple Inc.
+    5  The Netherlands     Amsterdam                Google LLC
+    6             <NA>          <NA>                      <NA>
+    7             <NA>          <NA>                      <NA>
+    8             <NA>          <NA>                      <NA>
+    9             <NA>          <NA>                      <NA>
+    10            <NA>          <NA>                      <NA>
 
 ## Вывод
 
