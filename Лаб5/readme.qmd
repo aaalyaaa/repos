@@ -1,0 +1,244 @@
+---
+title: "Практическая работа 005"
+author: "gribanovaaalya@yandex.ru"
+format: 
+  md:
+    output-file: README.md
+---
+
+## Название
+
+Исследование информации о состоянии беспроводных сетей
+
+## Цель работы
+
+1. Получить знания о методах исследования радиоэлектронной обстановки
+2. Составить представление о механизмах работы Wi-Fi сетей на канальном и сетевом уровне модели OSI
+3. Зекрепить практические навыки использования языка программирования R для обработки данных
+4. Закрепить знания основных функций обработки данных экосистемы tidyverse языка R
+
+## Исходные данные
+
+1. Ноутбук с ОС Windows 10
+2. Rstudio Desktop
+3. Интерпретатор R 4.5.1
+
+## Задание
+
+Используя программный пакет dplyr языка программирования R провести анализ журналов и ответить на вопросы
+
+## План выполнения
+
+1. Импортировать данные
+2. Провести анализ точек доступа
+3. Провести анализ данных клиентов
+
+## Описание шагов
+
+### Шаг 1
+
+Подключим необходимые библиотеки:
+
+```{r}
+library(dplyr)
+```
+
+```{r}
+library(readr)
+```
+
+```{r}
+library(tidyverse)
+```
+
+#### 1. Импортируем данные:
+
+```{r}
+td_data <- read_csv("P2_wifi_data.csv", skip = 1, n_max = 167)
+
+client_data <- read_csv("P2_wifi_data.csv", skip = 169)
+```
+
+#### 2. Приведем датасеты к аккуратному виду:
+
+```{r}
+td_data <- td_data %>% 
+  rename(
+    First_time_seen = 2,
+    Last_time_seen = 3,
+    Channel = 4,
+    Beacons = 10,
+    IV = 11,
+    LAN_IP = 12,
+    ID_length = 13) %>%
+  mutate(
+    Channel = as.integer(Channel),
+    Speed = as.integer(Speed),
+    Power = as.integer(Power),
+    Beacons = as.integer(Beacons),
+    IV = as.integer(IV),
+    ID_length = as.integer(ID_length)
+  )
+```
+
+```{r}
+client_data <- client_data %>% 
+  rename(
+    Station_MAC = 1,
+    First_time_seen = 2,
+    Last_time_seen = 3,
+    Packets = 5,
+    Probed_ESSIDs = 7) %>%
+  mutate(
+    Power = as.integer(Power),
+    Packets = as.integer(Packets)
+  )
+```
+
+#### 3. Посмотрим общую структуру данных:
+
+```{r}
+glimpse(td_data)
+```
+
+```{r}
+glimpse(client_data)
+```
+### Шаг 2
+
+Выполним анализ точек доступа:
+
+#### 1. Определим небезопасные точки доступа (без шифрования – OPN):
+
+```{r}
+unsave_p <- td_data %>% filter(Privacy == "OPN") %>% select(BSSID)
+unsave_p
+```
+
+#### 2. Определим производителя для каждого обнаруженного устройства:
+
+```{r}
+manuf_db <- read.delim("manuf.txt", sep = "\t", header = FALSE,
+                       comment.char = "#", strip.white = TRUE,
+                       col.names = c("MAC_prefix", "Short_name", "Full_name"),
+                       quote = "")
+```
+
+```{r}
+unsave_p %>% mutate(OUI = substr(BSSID, 1, 8)) %>% left_join(manuf_db, by = c("OUI" = "MAC_prefix")) %>% select(BSSID, Full_name)
+```
+
+#### 3. Выявим устройства, использующие последнюю версию протокола шифрования WPA3, и названия точек доступа, реализованных на этих устройствах:
+
+```{r}
+td_data %>% filter(str_detect(Privacy, "WPA3")) %>% select(BSSID, ESSID, Privacy)
+```
+
+#### 4. Отсортируем точки доступа по интервалу времени, в течение которого они находились на связи, по убыванию:
+
+```{r}
+session_result <- td_data %>%
+  arrange(BSSID, First_time_seen) %>%
+  group_by(BSSID) %>%
+  mutate(
+    time_break = as.numeric(
+      First_time_seen - lag(Last_time_seen, default = first(First_time_seen))
+    ),
+    session_number = cumsum(time_break > 2700) + 1
+  ) %>%
+  group_by(BSSID, session_number) %>%
+  summarise(
+    session_begin = min(First_time_seen),
+    session_complete = max(Last_time_seen),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    active_seconds = as.numeric(session_complete - session_begin)
+  ) %>%
+  arrange(desc(active_seconds)) %>%
+  select(BSSID, session_begin, session_complete, active_seconds)
+
+session_result
+```
+
+#### 5. Обнаружим топ-10 самых быстрых точек доступа:
+
+```{r}
+td_data %>% arrange(desc(Speed)) %>% select(BSSID, Speed) %>% head(10)
+```
+
+#### 6. Отсортировать точки доступа по частоте отправки запросов (beacons) в единицу времени по их убыванию:
+
+```{r}
+td_data %>% group_by(BSSID, ESSID) %>%
+  summarise(
+    Total_beac = sum(Beacons),
+    Time_start = min(First_time_seen),
+    Time_end = max(Last_time_seen),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    Sec = as.numeric(Time_end - Time_start, units = "secs"),
+    Beac_per_sec = Total_beac / Sec
+  ) %>%
+  filter(Sec > 0) %>%
+  ungroup() %>%
+  arrange(desc(Beac_per_sec)) %>%
+  select(BSSID, Total_beac, Sec, Beac_per_sec)
+```
+
+### Шаг 3
+
+Выполним анализ данных клиентов:
+
+#### 1. Определим производителя для каждого обнаруженного устройства:
+
+```{r}
+client_data %>% mutate(OUI = substr(Station_MAC, 1, 8)) %>% left_join(manuf_db, by = c("OUI" = "MAC_prefix")) %>% select(Station_MAC, Full_name)
+```
+
+#### 2. Обнаружим устройства, которые НЕ рандомизируют свой MAC адрес:
+
+```{r}
+client_data %>% filter(!substr(Station_MAC, 2, 2) %in% c("2", "6", "A", "E")) %>% distinct() %>% select(Station_MAC)
+```
+
+#### 3. Кластеризуем запросы от устройств к точкам доступа по их именам. Определим время появления устройства в зоне радиовидимости и время выхода его из нее:
+
+```{r}
+result <- client_data %>%
+  filter(Probed_ESSIDs != "" & !is.na(Probed_ESSIDs)) %>%
+  mutate(networks = strsplit(Probed_ESSIDs, ",")) %>%
+  unnest(networks) %>%
+  mutate(networks = trimws(networks)) %>%
+  group_by(Station_MAC, networks) %>%
+  summarise(
+    first = min(First_time_seen),
+    last = max(Last_time_seen),
+    .groups = "drop")
+
+result
+```
+
+#### 4. Оценим стабильность уровня сигнала внури кластера во времени. Выявим наиболее стабильный кластер:
+
+```{r}
+client_data %>%
+  filter(Probed_ESSIDs != "" & !is.na(Probed_ESSIDs)) %>%
+  mutate(networks = strsplit(Probed_ESSIDs, ",")) %>%
+  unnest(networks) %>%
+  mutate(networks = trimws(networks)) %>%
+  group_by(device = Station_MAC, network = networks) %>%
+  summarise(
+    request_count = n(),
+    avg_power = mean(Power, na.rm = TRUE),
+    sd_power = if (n() == 1) 0 else sd(Power, na.rm = TRUE),
+    .groups = "drop") %>%
+  filter(request_count > 1) %>%
+  arrange(sd_power) %>%
+  head(1)
+```
+
+## Вывод
+
+В результате выполнения практической работы были получены знания о методах исследования радиоэлектронной обстановки, составлено представление о механизмах работы Wi-Fi сетей на канальном и сетевом уровне модели OSI, закреплены практические навыки использования языка программирования R для обработки данных.
